@@ -1,0 +1,9 @@
+cd D:\past\stock_info_311_Project\
+
+python -m US.data_pipeline.company_symbols.scrape_US_co_symbol
+python -m US.data_pipeline.company_fundamentals.scrape_US_co_fundamentals
+python -m US.data_pipeline.company_screening.screen_US_co
+python -m US.data_pipeline.company_prices.scrape_part_US_price
+python -m US.data_pipeline.company_prices.make_final_price_indicators
+
+python -m US.system.start_system

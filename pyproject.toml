@@ -1,0 +1,31 @@
+[project]
+name = "us"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "pandas (>=3.0.3,<4.0.0)",
+    "numpy (>=2.4.6,<3.0.0)",
+    "scipy (>=1.17.1,<2.0.0)",
+    "ta-lib (>=0.6.8,<0.7.0)",
+    "pyarrow (>=24.0.0,<25.0.0)",
+    "yfinance (>=1.4.1,<2.0.0)",
+    "fake-useragent (>=2.2.0,<3.0.0)",
+    "python-dotenv (>=1.2.2,<2.0.0)",
+    "pydantic (>=2.13.4,<3.0.0)",
+    "dbt-duckdb (>=1.10.1,<2.0.0)",
+    "snowflake-connector-python (>=4.6.0,<5.0.0)",
+    "slack-sdk (>=3.42.0,<4.0.0)",
+    "gspread (>=6.2.1,<7.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+pipdeptree = ">=3.1.0"

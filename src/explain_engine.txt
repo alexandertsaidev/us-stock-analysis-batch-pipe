@@ -1,0 +1,96 @@
+﻿
+# US/data_pipeline/company_prices_engine/explain_engine.py
+
+
+1.mark_price_peaks_troughs_detail
+
+  A.找出 來自"Close價格" 的局部"高點"
+
+    1.只要符合至少一個 "後高點" > "前10個高點"
+    2.且符合至少一個 abs("後高點"-"前10個高點") <="ATR"
+    3.若符合:標記"後高點"在"Higher_Peak"欄位為 True
+
+  B.找出 來自"Close價格" 的局部"低點"
+
+    1.只要符合至少一個 "後低點" < "前4個低點"
+    2.且符合至少一個 abs("後低點"-"前4個低點") <="ATR"
+    3.若符合:標記"後低點"在"Lower_Peak"欄位為 True
+
+2.mark_FI_2_peaks_troughs_detail
+
+  A.找出 "FI_2" 的局部"高點"
+
+    1.只要符合 原假設條件"
+    2.且符合("FI_2">0)
+
+  B.找出 "FI_2" 的局部"低點"
+
+    1.只要符合 原假設條件"
+    2.且符合("FI_2"<0)
+
+3.mark_FI_13_peaks_troughs_detail
+
+  A.找出 "FI_13" 的局部"高點"
+
+    1.符合("FI_13"[index]>0)
+    2.且符合 abs("FI_13"[index]- "FI_13"[index-1]) / abs("FI_13"[index-1] *100) > 30
+    3.若符合:標記"高點"在"FI_13_Peak"欄位為 True
+
+  B.找出 "FI_13" 的局部"低點"
+
+    1.符合("FI_13"[index]<0)
+    2.且符合 abs("FI_13"[index]- "FI_13"[index-1]) / abs("FI_13"[index-1] *100) > 30
+    3.若符合:標記"低點"在"FI_13_Trough"欄位為 True
+
+4.mark_trend_1
+
+  A.trough_mask_1 : 谷底標記欄位名稱（字串），"Lower_Peak" =True 的列才參與 Up 判斷
+    
+    1.從已被標記谷底index往前 第n天，假設m為最小間距
+    2.index與n的範圍內找出(index - n > m)
+    3.index與n的範圍內找出(index對應值 - n對應值 >0)
+    4-1.且符合 abs(index對應值-n對應值 >0) / abs(n對應值) *100 > 30 所有之中最大的
+    4-2.且符合 abs(index對應值-n對應值 >0) / abs(n對應值) *100 > 15 所有之中最大的
+
+    5-1.若符合:標記"FI_13_trend"欄位為 Up
+    5-2.若符合:標記"MACD_hist_trend"欄位為 Up
+
+  B.peak_mask_1   : 峰頂標記欄位名稱（字串），"Higher_Peak"=True 的列才參與 Down 判斷
+
+    1.從已被標記峰頂index往前 第n天，假設m為最小間距
+    2.index與n的範圍內找出(index - n > m)
+    3.index與n的範圍內找出(index對應值 - n對應值 <0)
+    4-1.且符合 abs(index對應值-n對應值 <0) / abs(n對應值) *100 > 30 所有之中最大的
+    4-2.且符合 abs(index對應值-n對應值 <0) / abs(n對應值) *100 > 15 所有之中最大的
+
+    5-1.若符合:標記"FI_13_trend"欄位為 Down
+    5-2.若符合:標記"MACD_hist_trend"欄位為 Down
+
+5.mark_trend_2
+
+
+6.mark_trend_3
+
+  針對:"indicator_pair_3": ["Bull_Power", "Bear_Power"]
+
+  A.peak_mask_1 : 高峰標記欄位名稱(字串)
+    "Higher_Peak" =True 的列才參與 Down 判斷
+    檢查"Bull_Power"
+
+    1.從已被標記高峰index往前至第n天
+    2.篩選符合 index-n 對應 "Bull_Power"值 >0
+    3.篩選符合 index-n 對應 "abs(Bull_Power"值)的前2大
+    4.且找出前2大 abs(index對應"Bull_Power"值-n對應"Bull_Power"值) <0
+
+  B.trough_mask_1 : 谷底標記欄位名稱(字串)
+    "Lower_Peak" =True 的列才參與 Up 判斷
+    檢查"Bear_Power"
+
+    1.從已被標記低點index往前至第n天
+    2.篩選符合 index-n 對應 "Bear_Power"值 <0
+    3.篩選符合 index-n 對應 abs("Bear_Power"值)的前2大
+    4.且找出前2大 abs(index對應"Bear_Power"值-n對應"Bear_Power"值) <0
+
+
+
+

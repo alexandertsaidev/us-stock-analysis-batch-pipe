@@ -1,0 +1,6 @@
+sources:
+  - name: raw
+    tables:
+      - name: us_all_prices
+        meta:
+          external_location: "s3://us-stock/stock/history/prices/gold/final_all/us_all_prices.parquet"
