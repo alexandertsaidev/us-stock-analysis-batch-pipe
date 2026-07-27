@@ -1,7 +1,3 @@
-# ==========================================
-# STOCK_ANALYZER_US/.gitignore（根目錄）
-# ==========================================
-
 ### Python ###
 __pycache__/
 *.py[cod]
@@ -151,6 +147,6 @@ logs/
 data/
 
 # JSON / CSV（根目錄層級）
-# ⚠️ dbt_project 內由 us/dbt_project/.gitignore 另行控制
+# dbt_project 內由 us/dbt_project/.gitignore 另行控制
 *.json
 *.csv
