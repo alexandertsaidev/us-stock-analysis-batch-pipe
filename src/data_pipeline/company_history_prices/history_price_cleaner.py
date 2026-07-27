@@ -188,7 +188,7 @@ def text_summary(results: list[dict]) -> str:
     success = [r for r in results if r["status"] == "success"]
     failed  = [r for r in results if r["status"] == "failed"]
 
-    lines = ["🧹 ==2.Silver 清洗結果摘要=="]
+    lines = ["🧹 2. Silver 清洗結果摘要"]
 
     lines.append(f"\n✅ 成功 ({len(success)})")
     for r in success:

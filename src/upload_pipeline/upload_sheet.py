@@ -38,12 +38,11 @@ def rewrite_gsheet(df, sheet_name, worksheet_name):
     # 4.處理 df 
     df = df.copy()
 
-    if "Date_" in df.columns:
-
-        # 只處理欄位名稱含 "Date_"
-        date_cols = [col for col in df.columns if "Date_" in col]
-
-        # 處理日期欄位
+    keywords = ["Date_", "created_at"]  # 自訂關鍵字
+    date_cols = [col for col in df.columns if any(kw in col for kw in keywords)]
+    
+    # 處理日期相關欄位
+    if date_cols:
         df[date_cols] = (
             df[date_cols]
             .apply(lambda x: pd.to_datetime(x, errors="coerce").dt.strftime("%Y-%m-%d"))

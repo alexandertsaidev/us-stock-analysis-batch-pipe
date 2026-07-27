@@ -252,7 +252,7 @@ def upsert_parquet(
 
 
 def text_summary(success) -> str:
-    lines = ["📊 ==4.股價 union 儲存結果摘要=="]
+    lines = ["📦 4. 股價 union 儲存結果摘要"]
 
     if success:
         lines.append(f"\n✅ 成功")

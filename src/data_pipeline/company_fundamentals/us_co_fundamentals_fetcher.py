@@ -299,7 +299,7 @@ async def fetch_all(tickers: list[str], now_date):
 
 # 6. 摘要文字
 def text_summary(success, retry, failed) -> str:
-    lines = ["📊 ==基本面抓取結果摘要=="]
+    lines = ["📊 1. 基本面抓取結果摘要"]
 
     lines.append(f"\n✅ 成功 ({len(success)})")
     for r in success:

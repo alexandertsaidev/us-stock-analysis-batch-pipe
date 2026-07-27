@@ -247,7 +247,7 @@ async def fetch_all(tickers: list, now):
 
 # 文字摘要
 def text_summary(success, retry, failed) -> str:
-    lines = ["📊 ==1.股價抓取結果摘要=="]
+    lines = ["📊 1. Bronze 股價抓取結果摘要"]
     
     lines.append(f"\n✅ 成功 success ({len(success)})")
     for r in success:

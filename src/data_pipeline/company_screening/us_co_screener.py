@@ -123,9 +123,9 @@ def _upsert_parquet_to_minio(
         return False
 
 def text_summary(df) -> str:
-    lines = ["📊 == 基本面抓取結果摘要 =="]
-    lines.append(f"總筆數：{len(df)}")
-    lines.append(f"日期：{df['created_at'].iloc[0]}")
+    lines = ["🎯 2. 基本面篩選結果摘要"]
+    lines.append(f"\n總筆數 : {len(df)}")
+    lines.append(f"日期 : {df['created_at'].iloc[0]}")
     lines.append("")
     lines.append(df.to_string(index=False))
 
@@ -145,7 +145,7 @@ def main():
         conn.register("us_co_screen", co_screen)
 
         result = conn.execute(
-            Path("/app/stock_analyzer_us_batch_pipeline/us/data_pipeline/company_screening/us_fundamentals_screen.sql")
+            Path("/opt/airflow/scripts/us-stock-analysis-batch-pipe/src/data_pipeline/company_screening/us_fundamentals_screen.sql")
             .read_text()
         ).to_arrow_table()
 
