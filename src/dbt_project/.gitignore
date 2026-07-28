@@ -1,7 +1,3 @@
-# ==========================================
-# us/dbt_project/.gitignore
-# ==========================================
-
 # dbt 產出目錄（build 產物，不需版控）
 target/
 dbt_packages/
@@ -16,7 +12,7 @@ profiles.yml
 # 環境變數
 .env
 
-# ⚠️ 不忽略 *.json 和 *.csv！
+# 不忽略 *.json 和 *.csv！
 # - seeds/ 內的 .csv 需要版控
 # - models/ 內的 schema.yml / sources.yml 需要版控
 # 只忽略 target/ 內的產出：
