@@ -51,6 +51,18 @@ with DAG(
             raise RuntimeError(result.stderr)
         print(result.stdout)
 
+    def run_upload_sheet():
+        import subprocess, sys, os
+        result = subprocess.run(
+            [sys.executable, "-m", "src.upload_pipeline.upload_sheet_2"],
+            cwd="/opt/airflow/scripts/us-stock-analysis-batch-pipe",
+            capture_output=True, text=True,
+            env={**os.environ, "PYTHONPATH": "/opt/airflow/scripts/us-stock-analysis-batch-pipe/src"},
+        )
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr)
+        print(result.stdout)
+
     co_fetcher = ExternalPythonOperator(
         task_id='co_fetcher',
         python=BATCH_PYTHON,
@@ -66,5 +78,9 @@ with DAG(
         python=BATCH_PYTHON,
         python_callable=run_co_screener,
     )
-
-    co_fetcher >> co_fund_fetcher >> co_screener
+    upload_sheet = ExternalPythonOperator(
+        task_id='upload_sheet',
+        python=BATCH_PYTHON,
+        python_callable=run_upload_sheet,
+    )
+    co_fetcher >> co_fund_fetcher >> co_screener >> upload_sheet

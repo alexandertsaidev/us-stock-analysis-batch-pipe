@@ -73,20 +73,19 @@ def main():
             arrow_table = get_pa_table(
                 conn = conn,
                 bucket = MINIO_BUCKET,
-                object_name = f"stock/history/prices/gold/conclusion/entry_conclusion.parquet"
+                object_name = f"stock/screening/us_all_co_screen.parquet"
             )
 
-            conn.register("entry_conclusion", arrow_table)
+            conn.register("co_screen", arrow_table)
 
             df = conn.execute(f"""
-                SELECT * FROM "entry_conclusion"
-                ORDER BY "Date_D" DESC, "ticker" ASC
+                SELECT * FROM "co_screen"
+                ORDER BY "created_at" DESC, "ticker" ASC
             """).df().fillna("None")
 
             time.sleep(1)
-            rewrite_gsheet(df, "entry_conclusion", "US")
-
-            slack_batch_pipe_notify(f"🔗 5. 已上傳 entry_conclusion 至 Google Sheet\n  • {os.environ['GSHEET_ENTRY_URL']}")
+            rewrite_gsheet(df, "co_screen_conclusion", "US")
+            slack_batch_pipe_notify(f"🔗 3. 已上傳 co_screen_conclusion 至 Google Sheet\n  • {os.environ['GSHEET_SCREEN_URL']}")
 
     except Exception as e:
         logger.error(f"上傳失敗 : {e}", exc_info=True)
