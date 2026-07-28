@@ -11,7 +11,7 @@ import duckdb
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from ...notify.slack_notify import slack_pipe_notify
+from ...notify.slack_notify import slack_batch_pipe_notify
 
 from ...config.minio_conn import s3_client, MINIO_BUCKET
 from ...config.minio_duckdb_conn import get_duckdb_conn
@@ -162,7 +162,7 @@ def main():
 
     df = result.to_pandas()
     summary = text_summary(df)
-    slack_pipe_notify(summary)
+    slack_batch_pipe_notify(summary)
 
 
 if __name__ == "__main__":

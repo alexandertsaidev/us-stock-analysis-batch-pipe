@@ -22,7 +22,7 @@ from yfinance.exceptions import YFRateLimitError, YFTickerMissingError, YFInvali
 from ...config.minio_conn import s3_client, MINIO_BUCKET
 from ...config.minio_duckdb_conn import get_duckdb_conn
 
-from ...notify.slack_notify import slack_pipe_notify
+from ...notify.slack_notify import slack_batch_pipe_notify
 
 from ...utils.helpers import save_parquet_to_minio
 from ...utils.helpers import get_pa_table
@@ -367,7 +367,7 @@ def main():
             )
 
     summary = text_summary(success, retry, failed)
-    slack_pipe_notify(summary)
+    slack_batch_pipe_notify(summary)
 
 if __name__ == "__main__":
     main()

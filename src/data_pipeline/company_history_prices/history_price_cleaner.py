@@ -11,7 +11,7 @@ import pyarrow.parquet as pq
 
 from botocore.exceptions import ClientError
 
-from ...notify.slack_notify import slack_pipe_notify
+from ...notify.slack_notify import slack_batch_pipe_notify
 from ...config.minio_conn import s3_client, MINIO_BUCKET
 from ...utils.helpers import countdown
 
@@ -220,7 +220,7 @@ def main():
 
     # 3. results 文字摘要（供 slack send）
     summary = text_summary(results)
-    slack_pipe_notify(summary)
+    slack_batch_pipe_notify(summary)
 
     return
 

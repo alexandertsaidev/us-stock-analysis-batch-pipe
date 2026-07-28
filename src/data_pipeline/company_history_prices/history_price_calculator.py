@@ -14,7 +14,7 @@ import pyarrow.parquet as pq
 
 import numpy as np
 
-from ...notify.slack_notify import slack_pipe_notify
+from ...notify.slack_notify import slack_batch_pipe_notify
 
 from ...config.minio_conn import s3_client, MINIO_BUCKET
 from ...config.minio_duckdb_conn import get_duckdb_conn
@@ -180,7 +180,7 @@ def main():
 
     # results 文字摘要（供 slack send）
     summary = text_summary(save_results)
-    slack_pipe_notify(summary)
+    slack_batch_pipe_notify(summary)
 
 
 if __name__ == "__main__":
