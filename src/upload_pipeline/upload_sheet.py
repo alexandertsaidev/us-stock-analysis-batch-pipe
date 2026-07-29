@@ -13,7 +13,7 @@ from google.oauth2.service_account import Credentials
 from ..config.minio_conn import s3_client, MINIO_BUCKET
 from ..config.minio_duckdb_conn import get_duckdb_conn
 
-from ...notify.slack_notify import slack_batch_pipe_notify
+from ..notify.slack_notify import slack_batch_pipe_notify
 
 from ..utils.helpers import get_pa_table
 from ..utils.helpers import countdown
