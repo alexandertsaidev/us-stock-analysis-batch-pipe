@@ -1,19 +1,15 @@
-import io
 import sys
 from pathlib import Path
 
 import logging
 
-from botocore.exceptions import ClientError
-
 import duckdb
 
 import pyarrow as pa
-import pyarrow.parquet as pq
 
 from ...notify.slack_notify import slack_batch_pipe_notify
 
-from ...config.minio_conn import s3_client, MINIO_BUCKET
+from ...config.minio_conn import MINIO_BUCKET
 from ...config.minio_duckdb_conn import get_duckdb_conn
 
 from ...utils.helpers import save_parquet_to_minio
@@ -23,41 +19,12 @@ from ...utils.helpers import countdown
 
 logger = logging.getLogger(__name__)
 
-
-def get_co_fund(
-    conn: duckdb.DuckDBPyConnection,
-    bucket: str,
-    object_name: str
-    ) -> pa.Table:
-
-    try:
-        pa_table = conn.execute(f"""
-            SELECT *
-            FROM read_parquet('s3://{bucket}/{object_name}')
-        """).to_arrow_table()
-        
-        logger.info(f"從 {bucket}/{object_name} 取得 {pa_table.num_rows} 檔")
-        return pa_table
-
-    except duckdb.HTTPException as e:
-        logger.error(f"DuckDB 讀取 S3 失敗 ({bucket}/{object_name}): {e}", exc_info=True)
-        raise FileNotFoundError(f"找不到檔案: s3://{bucket}/{object_name}") from e
-
-    except ClientError as e:
-        # 保留 boto3 ClientError，以防其他地方仍用 s3_client
-        logger.error(f"MinIO 讀取失敗 ({bucket}/{object_name}): {e}", exc_info=True)
-        raise
-
-    except Exception as e:
-        logger.error(f"讀取 {bucket}/{object_name} 發生未知錯誤: {e}", exc_info=True)
-        raise
-
 def _upsert_parquet_to_minio(
-    conn: duckdb.DuckDBPyConnection,
-    arrow_table: pa.Table,  # pa = pyarrow
-    bucket: str,
-    temp_object_name: str,
-    final_object_name: str,
+        conn: duckdb.DuckDBPyConnection,
+        arrow_table: pa.Table,  # pa = pyarrow
+        bucket: str,
+        temp_object_name: str,
+        final_object_name: str,
     ) -> bool:
 
     """
@@ -83,7 +50,7 @@ def _upsert_parquet_to_minio(
         except FileNotFoundError:
             final_exists = False
         
-        if final_exists is True :
+        if final_exists :
 
             arrow_merged = conn.execute("""
                 SELECT
@@ -131,12 +98,11 @@ def text_summary(df) -> str:
 
     return "\n".join(lines)
 
-
 def main():
 
     with get_duckdb_conn() as conn:
 
-        co_screen: pa.Table = get_co_fund(
+        co_screen = get_pa_table(
             conn = conn,
             bucket= MINIO_BUCKET,
             object_name= f"stock/fundamentals/temp_us_co_fundamentals.parquet"
@@ -163,7 +129,6 @@ def main():
     df = result.to_pandas()
     summary = text_summary(df)
     slack_batch_pipe_notify(summary)
-
 
 if __name__ == "__main__":
     main()

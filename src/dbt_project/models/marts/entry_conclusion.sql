@@ -1,8 +1,10 @@
-{{ config(
-    materialized='external',
-    location='s3://us-stock/stock/history/prices/gold/conclusion/entry_conclusion.parquet',
-    format='parquet'
-) }}
+{{ 
+    config(
+        materialized='external',
+        location='s3://us-stock/stock/history/prices/gold/conclusion/entry_conclusion.parquet',
+        format='parquet'
+    )
+}}
 
 WITH base AS (
     SELECT

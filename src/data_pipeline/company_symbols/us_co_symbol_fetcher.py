@@ -4,8 +4,7 @@ import random
 import logging
 
 import time
-from datetime import datetime
-from zoneinfo import ZoneInfo
+from datetime import datetime, timezone
 
 import requests
 
@@ -23,11 +22,10 @@ from ...utils.helpers import countdown
 
 logger = logging.getLogger(__name__)
 
-# 爬蟲
 def scrape_US_tickers(
-    url="https://www.sec.gov/files/company_tickers.json",
-    retries=5,
-    sleep_range=(1, 10)
+        url="https://www.sec.gov/files/company_tickers.json",
+        retries=5,
+        sleep_range=(1, 10)
     ):
 
     attempt = 0
@@ -54,18 +52,17 @@ def scrape_US_tickers(
     return data_json
 
 def upsert_co_list(
-    conn: duckdb.DuckDBPyConnection,
-    json_data,
-    bucket: str,
-    object_name: str
+        conn: duckdb.DuckDBPyConnection,
+        json_data,
+        bucket: str,
+        object_name: str
     ):
 
     if not json_data:
         logger.warning("json_data 為空，略過")
         return
 
-    tz = "America/New_York"
-    batch_timestamp = datetime.now(ZoneInfo(tz))
+    batch_timestamp = datetime.now(timezone.utc)
 
     rows = [
         {

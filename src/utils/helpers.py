@@ -14,7 +14,7 @@ import pyarrow.parquet as pq
 import logging
 from botocore.exceptions import ClientError
 
-from ..config.minio_conn import s3_client
+from ..config.minio_conn import get_s3_client
 
 
 def countdown(seconds):
@@ -22,26 +22,41 @@ def countdown(seconds):
         print("Close in "+ str(i) +" seconds..." , end='\r')
         time.sleep(1)
 
-def get_time_str(mode):
-    """
-    mode:
-        "ymd" -> YYYYMMDD
-        "ym"  -> YYYYMM
-        "full"-> YYYYMMDD_HHMMSS
-    """
-    now = datetime.now()
-
-    if mode == "ymd":
-        return now.strftime("%Y%m%d")
-    elif mode == "ym":
-        return now.strftime("%Y%m")
-    elif mode == "full":
-        return now.strftime("%Y%m%d_%H%M%S")
-    else:
-        raise ValueError(f"Unknown mode: {mode}")
-
 def get_now(tz: str = "America/New_York") -> datetime:
     return datetime.now(ZoneInfo(tz))
+
+
+def get_co_fetch_list(
+        conn: duckdb.DuckDBPyConnection,
+        bucket: str,
+        object_name: str
+    ) -> list[str]:
+
+    logger = logging.getLogger(__name__)
+    
+    try:
+        tickers = conn.execute(f"""
+            SELECT DISTINCT "ticker"
+            FROM read_parquet('s3://{bucket}/{object_name}')
+            WHERE "created_at" >= CURRENT_DATE - INTERVAL '2 years'
+            ORDER BY "ticker" ASC
+        """).df()["ticker"].tolist()
+        
+        logger.info(f"從 {bucket}/{object_name} 取得 {len(tickers)} 檔")
+        return tickers
+
+    except duckdb.HTTPException as e:
+        logger.error(f"DuckDB 讀取 S3 失敗 ({bucket}/{object_name}): {e}", exc_info=True)
+        raise FileNotFoundError(f"找不到檔案: s3://{bucket}/{object_name}") from e
+
+    except ClientError as e:
+        # 保留 boto3 ClientError，以防其他地方仍用 s3_client
+        logger.error(f"MinIO 讀取失敗 ({bucket}/{object_name}): {e}", exc_info=True)
+        raise
+    except Exception as e:
+        logger.error(f"讀取 {bucket}/{object_name} 發生未知錯誤: {e}", exc_info=True)
+        raise
+
 
 def get_pa_table(
     conn: duckdb.DuckDBPyConnection,
@@ -84,6 +99,7 @@ def save_parquet_to_minio(
     ):
 
     logger = logging.getLogger(__name__)
+    s3_client = get_s3_client()
 
     try:
         buffer = io.BytesIO()
@@ -114,6 +130,7 @@ def save_df_as_parquet_to_minio(
     ) -> None:
 
     logger = logging.getLogger(__name__)
+    s3_client = get_s3_client()
     
     try:
         conn.register("upload_df", df)
