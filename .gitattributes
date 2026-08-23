@@ -1,0 +1,12 @@
+# 全域強制 LF
+* text=auto eol=lf
+
+# Python 官方模板
+*.py     text diff=python
+*.db     binary
+*.pkl    binary
+*.pyc    binary export-ignore
+*.pyd    binary
+
+# Dockerfile 強制 LF
+Dockerfile  text eol=lf
