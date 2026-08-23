@@ -7,11 +7,11 @@ from pendulum import timezone
 BATCH_PYTHON = "/opt/venvs/us-stock-analysis-batch-pipe/bin/python"
 
 with DAG(
-    dag_id='stock_analyzer_us_2',
+    dag_id='us_stock_analyzer_2',
     start_date=datetime(2024, 1, 1, tzinfo=timezone('America/New_York')),
     schedule='0 18 * * 1-5',
     catchup=False,
-    tags=['stock_analyzer_us_2'],
+    tags=["stock", "us", "batch"],
 ) as dag:
 
     def run_fetcher():
@@ -62,10 +62,22 @@ with DAG(
             raise RuntimeError(result.stderr)
         print(result.stdout)
 
-    def run_upload_sheet():
+    def run_upload_sheet_entry():
         import subprocess, sys, os
         result = subprocess.run(
-            [sys.executable, "-m", "src.upload_pipeline.upload_sheet"],
+            [sys.executable, "-m", "src.upload_pipeline.upload_sheet_entry"],
+            cwd="/opt/airflow/scripts/us-stock-analysis-batch-pipe",
+            capture_output=True, text=True,
+            env={**os.environ, "PYTHONPATH": "/opt/airflow/scripts/us-stock-analysis-batch-pipe/src"},
+        )
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr)
+        print(result.stdout)
+
+    def run_upload_sheet_exit1():
+        import subprocess, sys, os
+        result = subprocess.run(
+            [sys.executable, "-m", "src.upload_pipeline.upload_sheet_exit1"],
             cwd="/opt/airflow/scripts/us-stock-analysis-batch-pipe",
             capture_output=True, text=True,
             env={**os.environ, "PYTHONPATH": "/opt/airflow/scripts/us-stock-analysis-batch-pipe/src"},
@@ -106,7 +118,7 @@ with DAG(
         python=BATCH_PYTHON,
         python_callable=run_unioner,
     )
-    conclusion = BashOperator(
+    entry_conclusion = BashOperator(
         task_id='entry_conclusion',
         bash_command=(
             "/opt/venvs/us-stock-analysis-batch-pipe/bin/dbt run "
@@ -115,10 +127,24 @@ with DAG(
             "--select +entry_conclusion"
         ),
     )
-    upload_sheet = ExternalPythonOperator(
-        task_id='upload_sheet',
+    exit1_conclusion = BashOperator(
+        task_id='exit1_conclusion',
+        bash_command=(
+            "/opt/venvs/us-stock-analysis-batch-pipe/bin/dbt run "
+            "--project-dir /opt/airflow/scripts/us-stock-analysis-batch-pipe/src/dbt_project "
+            "--profiles-dir /opt/airflow/scripts/us-stock-analysis-batch-pipe/src/dbt_project "
+            "--select +exit_1_conclusion"
+        ),
+    )
+    upload_sheet_entry = ExternalPythonOperator(
+        task_id='upload_sheet_entry',
         python=BATCH_PYTHON,
-        python_callable=run_upload_sheet,
+        python_callable=run_upload_sheet_entry,
+    )
+    upload_sheet_exit1 = ExternalPythonOperator(
+        task_id='upload_sheet_exit1',
+        python=BATCH_PYTHON,
+        python_callable=run_upload_sheet_exit1,
     )
     upload_snowflake = ExternalPythonOperator(
         task_id='upload_snowflake',
@@ -128,4 +154,4 @@ with DAG(
 
     fetcher >> cleaner >> calculator
     calculator >> [unioner, upload_snowflake]
-    unioner >> conclusion >> upload_sheet
+    unioner >> entry_conclusion >> exit1_conclusion >> [upload_sheet_entry, upload_sheet_exit1]

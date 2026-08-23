@@ -10,7 +10,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from ..notify.slack_notify import slack_pipe_notify
-from ..config.minio_conn import s3_client, MINIO_BUCKET
+from ..config.minio_conn import get_s3_client, MINIO_BUCKET
 from ..config.snowflake_conn import snow_conn
 
 from ..utils.helpers import countdown
