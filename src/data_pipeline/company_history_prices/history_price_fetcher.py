@@ -157,6 +157,10 @@ def main():
         if not retry_tickers:
             break
 
+        logger.info(f"Try {attempt + 1}/{retries}，共 {len(retry_tickers)} 檔")
+        attempt += 1
+        time.sleep(attempt * 15)
+
         temp_dict = asyncio.run(async_fetch_save_all(retry_tickers))
 
         # success & failed 累加
@@ -166,9 +170,6 @@ def main():
         # retry 永遠只保留最新一輪
         final_dict["retry"] = temp_dict["retry"]
 
-        attempt += 1
-        logger.info(f"Try {attempt}/{retries}，共 {len(retry_tickers)} 檔")
-        time.sleep(attempt * 15)
 
     elapse = time.perf_counter() - start
 

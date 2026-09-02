@@ -279,6 +279,10 @@ def main():
             if not retry_tickers:
                 break
 
+            logger.info(f"Try {attempt + 1}/{retries}，共 {len(retry_tickers)} 檔")
+            attempt += 1
+            time.sleep(attempt * 15)
+
             temp_dict, temp_list = asyncio.run(async_fetch_all(retry_tickers))
 
             # success & failed 累加
@@ -291,9 +295,6 @@ def main():
             # 已經成功爬蟲的資料 進行累加
             final_list.extend(temp_list)
 
-            attempt += 1
-            logger.info(f"Try {attempt}/{retries}，共 {len(retry_tickers)} 檔")
-            time.sleep(attempt * 15)
 
         elapse = time.perf_counter() - start
 
