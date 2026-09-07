@@ -11,7 +11,7 @@ import logging
 import pandas as pd
 import yfinance as yf
 
-from yfinance.exceptions import YFRateLimitError, YFTickerMissingError, YFInvalidPeriodError
+from yfinance.exceptions import YFTzMissingError, YFPricesMissingError, YFTickerMissingError, YFInvalidPeriodError, YFRateLimitError
 
 from ...notify.slack_notify import slack_batch_pipe_notify
 
@@ -32,7 +32,7 @@ def fetch_save_price(
 
     try:
         stock = yf.Ticker(ticker)
-        df = stock.history(period='max', auto_adjust=False)
+        df = stock.history(period='max', auto_adjust=False, raise_errors=True)
 
         if not df.empty:
 
@@ -58,11 +58,13 @@ def fetch_save_price(
             
             return ("success", ticker, elapse)
         
-        else:
-            logger.warning(f"{ticker}: 無歷史股價資料")
-            return ("retry", ticker, 0)
-
+    except (YFTzMissingError, YFPricesMissingError) as e:
+        # 子類在前！下市 or 無價格
+        logger.warning(f"{ticker}: {e}")
+        return ("failed", ticker, 0)
+       
     except (YFTickerMissingError, YFInvalidPeriodError) as e:
+        # 其他 ticker 問題 or period 錯誤
         logger.warning(f"{ticker}: {e}")
         return ("failed", ticker, 0)
 
