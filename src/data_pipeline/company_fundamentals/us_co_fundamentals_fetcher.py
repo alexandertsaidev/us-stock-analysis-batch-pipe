@@ -16,7 +16,7 @@ import duckdb
 import pyarrow as pa
 
 from botocore.exceptions import ClientError
-from yfinance.exceptions import YFRateLimitError, YFTickerMissingError, YFInvalidPeriodError
+from yfinance.exceptions import YFTzMissingError, YFPricesMissingError, YFTickerMissingError, YFInvalidPeriodError, YFRateLimitError
 
 from ...config.minio_conn import MINIO_BUCKET
 from ...config.minio_duckdb_conn import get_duckdb_conn
@@ -140,17 +140,15 @@ def fetch_fund(
         market = stock.get_info()
 
         # 價格計算
-        current_price = market.get("currentPrice", None)
-        if not current_price :
-            hist = stock.history(period='max', auto_adjust=False)
-            if not hist.empty :
-                current_price = hist["Close"].iloc[-1]
+        hist = stock.history(period='max', auto_adjust=False, raise_errors=True)
+        
+        if not hist.empty :
+            current_price = hist["Close"].iloc[-1]
+            hist_high = hist["Close"].max()
+            hist_high_52w = market.get("fiftyTwoWeekHigh", None)
 
-        hist_high = stock.history(period='max', auto_adjust=False)["Close"].max()
-        hist_high_52w = market.get("fiftyTwoWeekHigh", None)
-
-        price_ratio    = np.trunc((current_price / hist_high) * 100) / 100 if hist_high else None
-        price_ratio_52w = np.trunc((current_price / hist_high_52w) * 100) / 100 if hist_high_52w else None
+            price_ratio    = np.trunc((current_price / hist_high) * 100) / 100 if hist_high else None
+            price_ratio_52w = np.trunc((current_price / hist_high_52w) * 100) / 100 if hist_high_52w else None
 
         row_data = {
             "created_at":                      datetime.now(timezone.utc).date(),
@@ -185,7 +183,13 @@ def fetch_fund(
 
         return ("success", ticker, elapse, row_data)
     
+    except (YFTzMissingError, YFPricesMissingError) as e:
+        # 子類在前！下市 or 無價格
+        logger.warning(f"{ticker}: {e}")
+        return ("failed", ticker, 0, {})
+    
     except (YFTickerMissingError, YFInvalidPeriodError) as e:
+        # 其他 ticker 問題 or period 錯誤
         logger.warning(f"{ticker}: {e}")
         return ("failed", ticker, 0, {})
 
@@ -302,22 +306,27 @@ def main():
 
             df_all = pd.DataFrame(final_list)
 
+            # 1.處理 string Infinity（PyArrow 不認識這個字串）
+            df_all.replace(["Infinity", "-Infinity", "inf", "-inf"], np.nan, inplace=True)
+
             num_cols = [c for c in df_all.select_dtypes(include="number").columns ]
 
-            # apply() 批量操作整欄or整列
+            # 2.apply() 批量操作整欄or整列
             df_all[num_cols] = (
                 df_all[num_cols]
-                .apply(pd.to_numeric, errors="coerce")     # pd.to_numeric() 只能處理一維(Series),每欄轉成數值,不能轉的變 NaN
+                .apply(pd.to_numeric, errors="coerce")       # pd.to_numeric() 只能處理一維(Series),每欄轉成數值,不能轉的變 NaN
                 .apply(lambda x: np.trunc(x * 1000) / 1000)  # 截斷到小數點3位
             )
 
-            # 處理真正的 float inf
+            # 3.處理 float inf
             df_all.replace([np.inf, -np.inf], np.nan, inplace=True)
 
-            # 處理缺失值
+            # 4.處理 string "None" or "none" → None
             missing_values = ["None","none"]
             df_all.replace(missing_values, None, inplace=True)
-            df_all.astype(object).where(pd.notnull(df_all), None)
+
+            # 5. 將 DataFrame 轉成 object dtype，並將 NaN 轉成 python None
+            df_all = df_all.astype(object).where(pd.notnull(df_all), None)
 
             _upsert_parquet_to_minio(
                 conn = conn,
