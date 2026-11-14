@@ -9,7 +9,7 @@ BATCH_PYTHON = "/opt/venvs/us-stock-analysis-batch-pipe/bin/python"
 with DAG(
     dag_id='us_stock_analyzer_2',
     start_date=datetime(2024, 1, 1, tzinfo=timezone('America/New_York')),
-    schedule='0 18 * * 1-5',
+    schedule='0 18 * * 0-5',  # 週日到週五 18:00 執行
     catchup=False,
     tags=["stock", "us", "batch"],
 ) as dag:
